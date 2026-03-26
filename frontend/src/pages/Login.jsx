@@ -1,24 +1,55 @@
+import axios from "axios";
 import React from "react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Login = () => {
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const navigate = useNavigate();
+
+  const handlChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post(
+        "http://localhost:8081/api/auth/login",
+        formData,
+      );
+
+      // success
+      if (res.data.success) {
+        toast.success(res.data.message);
+        localStorage.setItem("token", res.data.token);
+        navigate("/");
+      }
+
+      // clear form
+      setFormData({
         email: "",
         password: "",
-    })
+      });
+    } catch (error) {
+      // handle backend errors (401, 404)
+      if (error.response && error.response.data.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Something went wrong");
+      }
 
-    const handlChange = (e)=>{
-        setFormData({
-            ...formData,
-            [e.target.name] : e.target.value,
-        })
+      console.log(error);
     }
-
-    const handleSubmit = (e)=>{
-        e.preventDefault();
-        console.log(formData);
-    }
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -26,7 +57,6 @@ const Login = () => {
         <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
 
         <form onSubmit={handleSubmit}>
-
           {/* Email */}
           <div className="mb-4">
             <label className="block mb-1 text-gray-700">Email</label>
@@ -35,6 +65,7 @@ const Login = () => {
               placeholder="Enter your email"
               name="email"
               onChange={handlChange}
+              value={formData.email}
               required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             />
@@ -48,6 +79,7 @@ const Login = () => {
               placeholder="Enter your password"
               name="password"
               onChange={handlChange}
+              value={formData.password}
               required
               className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400"
             />
@@ -65,7 +97,10 @@ const Login = () => {
         {/* Footer */}
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account?{" "}
-          <Link to={"/register"} className="text-blue-500 cursor-pointer hover:underline">
+          <Link
+            to={"/register"}
+            className="text-blue-500 cursor-pointer hover:underline"
+          >
             register
           </Link>
         </p>
